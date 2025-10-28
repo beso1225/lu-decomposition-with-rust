@@ -1,3 +1,4 @@
+#[derive(Debug)]
 struct Matrix {
     n: usize, // number of rows
     m: usize, // number of columns
