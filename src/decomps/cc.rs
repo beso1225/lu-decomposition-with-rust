@@ -1,9 +1,12 @@
 use crate::matrix::{Matrix, MatrixState};
 
-pub fn cc_decomposition(mat: &mut Matrix) -> Matrix {
-    unimplemented!()
-}
 
-pub fn incomplete_cc_decomposition(mat: &mut Matrix, tol: usize) -> Matrix {
-    unimplemented!()
+impl Matrix {
+    pub fn cc_decomposition(&mut self) -> Matrix {
+        unimplemented!()
+    }
+
+    pub fn incomplete_cc_decomposition(&mut self, tol: usize) -> Matrix {
+        unimplemented!()
+    }
 }

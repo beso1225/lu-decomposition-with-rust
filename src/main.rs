@@ -1,7 +1,6 @@
 mod solutions;
 use solutions::{lu_solve, cg};
 mod decomps;
-use decomps::lu;
 mod matrix;
 use matrix::Matrix;
 
@@ -16,7 +15,7 @@ fn main() {
     println!("Original Matrix:");
     mat.show();
     println!("Right-hand side Vector b: {:?}", b);
-    let p = lu::lu_decomposition(&mut mat);
+    let p = mat.lu_decomposition();
     println!("LU Decomposed Matrix:");
     mat.show();
     println!("Permutation Vector:");
@@ -75,7 +74,7 @@ mod tests {
     #[test]
     fn test_solve_10x10() {
         let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
-        let p = lu::lu_decomposition(&mut mat);
+        let p = mat.lu_decomposition();
         let x = lu_solve::solve(&mat, &p, &b);
         let expected_x = output_vector("src/test/output/output2.csv");
         for i in 0..x.n {
@@ -86,7 +85,7 @@ mod tests {
     #[test]
     fn test_solve_50x50() {
         let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
-        let p = lu::lu_decomposition(&mut mat);
+        let p = mat.lu_decomposition();
         let x = lu_solve::solve(&mat, &p, &b);
         let expected_x = output_vector("src/test/output/output3.csv");
         for i in 0..x.n {
