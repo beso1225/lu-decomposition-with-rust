@@ -4,40 +4,115 @@ pub enum Matrix {
     Sparse(SparseMatrix),
 }
 
+#[allow(dead_code)]
 impl Matrix {
-    pub fn new(n: usize, m: usize) -> Self {
-        Matrix::Dense(DenseMatrix::new(n, m))
+    pub fn new(n: usize, m: usize, dense: bool) -> Self {
+        if dense {
+            Matrix::Dense(DenseMatrix::new(n, m))
+        } else {
+            Matrix::Sparse(SparseMatrix::new(n, m))
+        }
+    }
+
+    pub fn get(&self, row: usize, col: usize) -> f64 {
+        match self {
+            Matrix::Dense(dense) => dense.get(row, col),
+            Matrix::Sparse(sparse) => sparse.get(row, col),
+        }
+    }
+
+    pub fn set(&mut self, row: usize, col: usize, value: f64) {
+        match self {
+            Matrix::Dense(dense) => dense.set(row, col, value),
+            Matrix::Sparse(sparse) => sparse.set(row, col, value),
+        }
+    }
+
+    pub fn change(&mut self) {
+        match self {
+            Matrix::Dense(dense) => {
+                *self = Matrix::Sparse(SparseMatrix::from_dense(dense));
+            },
+            Matrix::Sparse(sparse) => {
+                *self = Matrix::Dense(DenseMatrix::from_sparse(sparse));
+            },
+        }
     }
 
     pub fn is_empty(&self) -> bool {
         match self {
             Matrix::Dense(dense) => dense.is_empty(),
-            Matrix::Sparse(_sparse) => unimplemented!(),
+            Matrix::Sparse(sparse) => sparse.is_empty(),
         }
     }
 
     pub fn is_symmetric_positive_definite(&self) -> bool {
         match self {
             Matrix::Dense(dense) => dense.is_symmetric_positive_definite(),
-            Matrix::Sparse(_sparse) => unimplemented!(),
+            Matrix::Sparse(sparse) => sparse.is_symmetric_positive_definite(),
         }
     }
 
     pub fn norm_inf(&self) -> f64 {
         match self {
             Matrix::Dense(dense) => dense.norm_inf(),
-            Matrix::Sparse(_sparse) => unimplemented!(),
+            Matrix::Sparse(sparse) => sparse.norm_inf(),
         }
     }
 
     pub fn copy(&self) -> Matrix {
         match self {
             Matrix::Dense(dense) => Matrix::Dense(dense.copy()),
-            Matrix::Sparse(_sparse) => unimplemented!(),
+            Matrix::Sparse(sparse) => Matrix::Sparse(sparse.copy()),
+        }
+    }
+
+    pub fn scalar_multiply(&self, scalar: f64) -> Matrix {
+        match self {
+            Matrix::Dense(dense) => Matrix::Dense(dense.scalar_multiply(scalar)),
+            Matrix::Sparse(sparse) => Matrix::Sparse(sparse.scalar_multiply(scalar)),
+        }
+    }
+
+    pub fn plus(left: &Matrix, right: &Matrix) -> Matrix {
+        match (left, right) {
+            (Matrix::Dense(ld), Matrix::Dense(rd)) => Matrix::Dense(DenseMatrix::plus(ld, rd)),
+            (Matrix::Sparse(ls), Matrix::Sparse(rs)) => Matrix::Sparse(SparseMatrix::plus(ls, rs)),
+            _ => panic!("Matrix types must match for addition"),
+        }
+    }
+
+    pub fn minus(left: &Matrix, right: &Matrix) -> Matrix {
+        match (left, right) {
+            (Matrix::Dense(ld), Matrix::Dense(rd)) => Matrix::Dense(DenseMatrix::minus(ld, rd)),
+            (Matrix::Sparse(ls), Matrix::Sparse(rs)) => Matrix::Sparse(SparseMatrix::minus(ls, rs)),
+            _ => panic!("Matrix types must match for subtraction"),
+        }
+    }
+
+    pub fn product(left: &Matrix, right: &Matrix) -> Matrix {
+        match (left, right) {
+            (Matrix::Dense(ld), Matrix::Dense(rd)) => Matrix::Dense(DenseMatrix::product(ld, rd)),
+            (Matrix::Sparse(ls), Matrix::Sparse(rs)) => Matrix::Sparse(SparseMatrix::product(ls, rs)),
+            _ => panic!("Matrix types must match for multiplication"),
+        }
+    }
+
+    pub fn inner_product(vec1: &Matrix, vec2: &Matrix) -> f64 {
+        match (vec1, vec2) {
+            (Matrix::Dense(v1), Matrix::Dense(v2)) => DenseMatrix::inner_product(v1, v2),
+            (Matrix::Sparse(v1), Matrix::Sparse(v2)) => SparseMatrix::inner_product(v1, v2),
+            _ => panic!("Both inputs must be of the same matrix type for inner product"),
         }
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum MatrixState {
+    Original,
+    Lu,
+    Cc,
+}
 
 #[derive(Debug, Clone)]
 pub struct DenseMatrix {
@@ -47,17 +122,6 @@ pub struct DenseMatrix {
     pub state: MatrixState,
 }
 
-#[derive(Debug, Clone)]
-pub struct SparseMatrix {
-    // Sparse matrix representation (e.g., CSR, CSC) can be defined here
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum MatrixState {
-    Original,
-    Lu,
-    Cc,
-}
 
 #[allow(dead_code)]
 impl DenseMatrix {
@@ -106,6 +170,11 @@ impl DenseMatrix {
             }
         }
         max_sum
+    }
+
+    pub fn from_sparse(sparse: &SparseMatrix) -> DenseMatrix {
+        // Convert SparseMatrix to DenseMatrix
+        unimplemented!()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -279,5 +348,78 @@ impl DenseMatrix {
             index += 1;
         }
         (mat, b)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SparseMatrix {
+    // Sparse matrix representation (e.g., CSR, CSC) can be defined here
+}
+
+impl SparseMatrix {
+    pub fn new(n: usize, m: usize) -> Self {
+        SparseMatrix {
+            // Initialize sparse matrix representation here
+        }
+    }
+
+    pub fn get(&self, row: usize, col: usize) -> f64 {
+        // Implement getting value from sparse matrix
+        unimplemented!()
+    }
+
+    pub fn set(&mut self, row: usize, col: usize, value: f64) {
+        // Implement setting value in sparse matrix
+        unimplemented!()
+    }
+
+    pub fn from_dense(dense: &DenseMatrix) -> SparseMatrix {
+        // Convert DenseMatrix to SparseMatrix
+        unimplemented!()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        // Implement check for empty sparse matrix
+        unimplemented!()
+    }
+
+    pub fn copy(&self) -> SparseMatrix {
+        // Implement deep copy for sparse matrix
+        unimplemented!()
+    }
+
+    pub fn norm_inf(&self) -> f64 {
+        // Implement infinity norm calculation for sparse matrix
+        unimplemented!()
+    }
+
+    pub fn is_symmetric_positive_definite(&self) -> bool {
+        // Implement check for symmetric positive definiteness for sparse matrix
+        unimplemented!()
+    }
+
+    pub fn scalar_multiply(&self, scalar: f64) -> SparseMatrix {
+        // Implement scalar multiplication for sparse matrix
+        unimplemented!()
+    }
+
+    pub fn plus(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
+        // Implement addition for sparse matrices
+        unimplemented!()
+    }
+
+    pub fn minus(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
+        // Implement subtraction for sparse matrices
+        unimplemented!()
+    }
+
+    pub fn product(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
+        // Implement multiplication for sparse matrices
+        unimplemented!()
+    }
+
+    pub fn inner_product(vec1: &SparseMatrix, vec2: &SparseMatrix) -> f64 {
+        // Implement inner product for sparse vectors
+        unimplemented!()
     }
 }
