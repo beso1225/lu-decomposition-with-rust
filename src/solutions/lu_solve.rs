@@ -1,6 +1,6 @@
-use crate::matrix::{Matrix, MatrixState};
+use crate::matrix::{DenseMatrix, MatrixState};
 
-pub fn solve(mat: &Matrix, p: &Matrix, b: &Matrix) -> Matrix {
+pub fn solve(mat: &DenseMatrix, p: &DenseMatrix, b: &DenseMatrix) -> DenseMatrix {
     if mat.state != MatrixState::Lu {
         panic!("Matrix must be LU decomposed to solve linear systems");
     }
@@ -31,7 +31,7 @@ pub fn solve(mat: &Matrix, p: &Matrix, b: &Matrix) -> Matrix {
         x[i] /= mat.data[i][i];
     }
 
-    let mut result = Matrix::new(mat.n, 1);
+    let mut result = DenseMatrix::new(mat.n, 1);
     for i in 0..mat.n {
         result.data[i][0] = x[i];
     }

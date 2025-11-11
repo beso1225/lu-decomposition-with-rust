@@ -1,11 +1,11 @@
-use crate::matrix::{Matrix, MatrixState};
+use crate::matrix::{DenseMatrix, MatrixState};
 
-impl Matrix {
-    pub fn lu_decomposition(&mut self) -> Matrix { // Changes original matrix to L and U matrix and returns permutation vector
+impl DenseMatrix {
+    pub fn lu_decomposition(&mut self) -> DenseMatrix { // Changes original matrix to L and U matrix and returns permutation vector
         if self.n != self.m {
             panic!("Matrix must be square for LU decomposition");
         }
-        let mut p = Matrix::new(self.n, 1);
+        let mut p = DenseMatrix::new(self.n, 1);
         for i in 0..self.n {
             p.data[i][0] = i as f64;
         }

@@ -1,9 +1,55 @@
 #[derive(Debug, Clone)]
-pub struct Matrix {
+pub enum Matrix {
+    Dense(DenseMatrix),
+    Sparse(SparseMatrix),
+}
+
+impl Matrix {
+    pub fn new(n: usize, m: usize) -> Self {
+        Matrix::Dense(DenseMatrix::new(n, m))
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Matrix::Dense(dense) => dense.is_empty(),
+            Matrix::Sparse(_sparse) => unimplemented!(),
+        }
+    }
+
+    pub fn is_symmetric_positive_definite(&self) -> bool {
+        match self {
+            Matrix::Dense(dense) => dense.is_symmetric_positive_definite(),
+            Matrix::Sparse(_sparse) => unimplemented!(),
+        }
+    }
+
+    pub fn norm_inf(&self) -> f64 {
+        match self {
+            Matrix::Dense(dense) => dense.norm_inf(),
+            Matrix::Sparse(_sparse) => unimplemented!(),
+        }
+    }
+
+    pub fn copy(&self) -> Matrix {
+        match self {
+            Matrix::Dense(dense) => Matrix::Dense(dense.copy()),
+            Matrix::Sparse(_sparse) => unimplemented!(),
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct DenseMatrix {
     pub n: usize, // number of rows
     pub m: usize, // number of columns
     pub data: Vec<Vec<f64>>, // 2D vector to hold matrix data
     pub state: MatrixState,
+}
+
+#[derive(Debug, Clone)]
+pub struct SparseMatrix {
+    // Sparse matrix representation (e.g., CSR, CSC) can be defined here
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -14,9 +60,9 @@ pub enum MatrixState {
 }
 
 #[allow(dead_code)]
-impl Matrix {
+impl DenseMatrix {
     pub fn new(n: usize, m: usize) -> Self {
-        Matrix {
+        DenseMatrix {
             n,
             m,
             data: vec![vec![0.0; m]; n],
@@ -41,8 +87,8 @@ impl Matrix {
         self.data[row][col] = value;
     }
 
-    pub fn copy(&self) -> Matrix {
-        let mut new_mat = Matrix::new(self.n, self.m);
+    pub fn copy(&self) -> DenseMatrix {
+        let mut new_mat = DenseMatrix::new(self.n, self.m);
         for i in 0..self.n {
             for j in 0..self.m {
                 new_mat.data[i][j] = self.data[i][j];
@@ -107,11 +153,11 @@ impl Matrix {
     //     result
     // }
 
-    pub fn plus(left: &Matrix, right: &Matrix) -> Matrix {
+    pub fn plus(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
         if left.n != right.n || left.m != right.m {
             panic!("Matrices must have the same dimensions for addition");
         }
-        let mut result = Matrix::new(left.n, left.m);
+        let mut result = DenseMatrix::new(left.n, left.m);
         for i in 0..left.n {
             for j in 0..left.m {
                 result.data[i][j] = left.data[i][j] + right.data[i][j];
@@ -120,11 +166,11 @@ impl Matrix {
         result
     }
 
-    pub fn minus(left: &Matrix, right: &Matrix) -> Matrix {
+    pub fn minus(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
         if left.n != right.n || left.m != right.m {
             panic!("Matrices must have the same dimensions for subtraction");
         }
-        let mut result = Matrix::new(left.n, left.m);
+        let mut result = DenseMatrix::new(left.n, left.m);
         for i in 0..left.n {
             for j in 0..left.m {
                 result.data[i][j] = left.data[i][j] - right.data[i][j];
@@ -133,11 +179,11 @@ impl Matrix {
         result
     }
 
-    pub fn product(left: &Matrix, right: &Matrix) -> Matrix {
+    pub fn product(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
         if left.m != right.n {
             panic!("Incompatible matrix dimensions for multiplication");
         }
-        let mut result = Matrix::new(left.n, right.m);
+        let mut result = DenseMatrix::new(left.n, right.m);
         for i in 0..left.n {
             for j in 0..right.m {
                 for k in 0..left.m {
@@ -148,7 +194,7 @@ impl Matrix {
         result
     }
 
-    pub fn inner_product(vec1: &Matrix, vec2: &Matrix) -> f64 {
+    pub fn inner_product(vec1: &DenseMatrix, vec2: &DenseMatrix) -> f64 {
         if vec1.n != vec2.n || vec1.m != 1 || vec2.m != 1 {
             panic!("Both inputs must be column vectors of the same length for inner product");
         }
@@ -159,8 +205,8 @@ impl Matrix {
         result
     }
 
-    pub fn scalar_multiply(&self, scalar: f64) -> Matrix {
-        let mut result = Matrix::new(self.n, self.m);
+    pub fn scalar_multiply(&self, scalar: f64) -> DenseMatrix {
+        let mut result = DenseMatrix::new(self.n, self.m);
         for i in 0..self.n {
             for j in 0..self.m {
                 result.data[i][j] = self.data[i][j] * scalar;
@@ -181,7 +227,7 @@ impl Matrix {
         max_row
     }
 
-    pub fn read_from_csv_with_right_hand_side(filename: &str) -> (Matrix, Matrix) {
+    pub fn read_from_csv_with_right_hand_side(filename: &str) -> (DenseMatrix, DenseMatrix) {
         /*
         Reads matrix data from a CSV file. The CSV file should have the following format:
         n, m,
@@ -214,7 +260,7 @@ impl Matrix {
         }
         let n = vals[0] as usize;
         let m = vals[1] as usize;
-        let mut mat = Matrix::new(n, m);
+        let mut mat = DenseMatrix::new(n, m);
         let mut index = 2;
         for i in 0..n {
             for j in 0..m {
@@ -224,9 +270,9 @@ impl Matrix {
         }
         let k = vals[index] as usize;
         if k == 0 {
-            return (mat, Matrix::new(0, 0));
+            return (mat, DenseMatrix::new(0, 0));
         }
-        let mut b = Matrix::new(k, 1);
+        let mut b = DenseMatrix::new(k, 1);
         index += 1;
         for i in 0..k {
             b.data[i][0] = vals[index];

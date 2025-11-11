@@ -2,7 +2,7 @@ mod solutions;
 use solutions::{lu_solve, cg};
 mod decomps;
 mod matrix;
-use matrix::Matrix;
+use matrix::{Matrix, DenseMatrix};
 
 fn main() {
     // let mut mat = Matrix::new(3, 3);
@@ -11,7 +11,7 @@ fn main() {
     //     vec![4.0, -6.0, 0.0],
     //     vec![-2.0, 7.0, 2.0],
     // ];
-    let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
+    let (mut mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
     println!("Original Matrix:");
     mat.show();
     println!("Right-hand side Vector b: {:?}", b);
@@ -30,7 +30,7 @@ fn main() {
     x.show();
 
     // Example usage of Conjugate Gradient solver
-    let (mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
+    let (mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
     let initial_guess = None; // or Some(Matrix::new(mat.n, 1)) for a zero initial guess
     let max_iter = 1000;
     let x_cg = cg::solve(&mat, &b, initial_guess, max_iter);
@@ -42,7 +42,7 @@ fn main() {
 mod tests {
     use super::*;
 
-    fn output_vector(filename: &str) -> Matrix {
+    fn output_vector(filename: &str) -> DenseMatrix {
         let mut reader = csv::ReaderBuilder::new()
             .has_headers(false)
             .flexible(true)
@@ -64,7 +64,7 @@ mod tests {
             }
         }
         let n = vals.len();
-        let mut matrix = Matrix::new(n, 1);
+        let mut matrix = DenseMatrix::new(n, 1);
         for i in 0..n {
             matrix.data[i][0] = vals[i];
         }
@@ -73,7 +73,7 @@ mod tests {
 
     #[test]
     fn test_solve_10x10() {
-        let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
+        let (mut mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
         let p = mat.lu_decomposition();
         let x = lu_solve::solve(&mat, &p, &b);
         let expected_x = output_vector("src/test/output/output2.csv");
@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn test_solve_50x50() {
-        let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
+        let (mut mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
         let p = mat.lu_decomposition();
         let x = lu_solve::solve(&mat, &p, &b);
         let expected_x = output_vector("src/test/output/output3.csv");
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn test_solve_50x50_with_cg() {
-        let (mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
+        let (mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
         let initial_guess = None;
         let max_iter = 1000;
         let x = cg::solve(&mat, &b, initial_guess, max_iter);
