@@ -1,6 +1,6 @@
 use crate::matrix::{Matrix, MatrixState};
 
-pub fn lu_solve(mat: &Matrix, p: &Matrix, b: &Matrix) -> Matrix {
+pub fn solve(mat: &Matrix, p: &Matrix, b: &Matrix) -> Matrix {
     if mat.state != MatrixState::Lu {
         panic!("Matrix must be LU decomposed to solve linear systems");
     }

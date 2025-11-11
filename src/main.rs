@@ -26,7 +26,7 @@ fn main() {
         println!("No right-hand side vector provided.");
         return;
     }
-    let x = lu_solve::lu_solve(&mat, &p, &b);
+    let x = lu_solve::solve(&mat, &p, &b);
     println!("Solution Vector x:");
     x.show();
 
@@ -34,7 +34,7 @@ fn main() {
     let (mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
     let initial_guess = None; // or Some(Matrix::new(mat.n, 1)) for a zero initial guess
     let max_iter = 1000;
-    let x_cg = cg::cg_solve(&mat, &b, initial_guess, max_iter);
+    let x_cg = cg::solve(&mat, &b, initial_guess, max_iter);
     println!("CG Solution Vector x:");
     x_cg.show();
 }
@@ -76,7 +76,7 @@ mod tests {
     fn test_solve_10x10() {
         let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
         let p = lu::lu_decomposition(&mut mat);
-        let x = lu_solve::lu_solve(&mat, &p, &b);
+        let x = lu_solve::solve(&mat, &p, &b);
         let expected_x = output_vector("src/test/output/output2.csv");
         for i in 0..x.n {
             assert!((x.data[i][0] - expected_x.data[i][0]).abs() < 1e-6, "Mismatch at index {}: expected {}, got {}", i, expected_x.data[i][0], x.data[i][0]);
@@ -87,7 +87,7 @@ mod tests {
     fn test_solve_50x50() {
         let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
         let p = lu::lu_decomposition(&mut mat);
-        let x = lu_solve::lu_solve(&mat, &p, &b);
+        let x = lu_solve::solve(&mat, &p, &b);
         let expected_x = output_vector("src/test/output/output3.csv");
         for i in 0..x.n {
             assert!((x.data[i][0] - expected_x.data[i][0]).abs() < 1e-6, "Mismatch at index {}: expected {}, got {}", i, expected_x.data[i][0], x.data[i][0]);
@@ -99,7 +99,7 @@ mod tests {
         let (mat, b) = Matrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
         let initial_guess = None;
         let max_iter = 1000;
-        let x = cg::cg_solve(&mat, &b, initial_guess, max_iter);
+        let x = cg::solve(&mat, &b, initial_guess, max_iter);
         let expected_x = output_vector("src/test/output/output3.csv");
         for i in 0..x.n {
             assert!((x.data[i][0] - expected_x.data[i][0]).abs() < 1e-6, "Mismatch at index {}: expected {}, got {}", i, expected_x.data[i][0], x.data[i][0]);

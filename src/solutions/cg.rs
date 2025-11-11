@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use crate::matrix::Matrix;
+use crate::decomps::cc;
 
-pub fn cg_solve(mat: &Matrix, b: &Matrix, initial_guess: Option<Matrix>, max_iter: usize) -> Matrix {
+pub fn solve(mat: &Matrix, b: &Matrix, initial_guess: Option<Matrix>, max_iter: usize) -> Matrix {
     // Simple CG implementation, with no preconditioning
     if !mat.is_symmetric_positive_definite() {
         panic!("Matrix must be symmetric positive definite for Conjugate Gradient method");
@@ -61,4 +62,8 @@ pub fn cg_solve(mat: &Matrix, b: &Matrix, initial_guess: Option<Matrix>, max_ite
     }
     println!("Conjugate Gradient Solver finished. Last iteration: {}", x.len() - 1);
     x.get(&(x.len() - 1)).unwrap().copy()
+}
+
+pub fn pcg_solve_cc(mat: &Matrix, p: &Matrix, b: &Matrix) -> Matrix {
+    unimplemented!()
 }
