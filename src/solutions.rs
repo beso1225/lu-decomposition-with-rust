@@ -1,2 +1,2 @@
-pub mod lu;
+pub mod lu_solve;
 pub mod cg;
