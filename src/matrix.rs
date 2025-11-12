@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug, Clone)]
 pub enum Matrix {
     Dense(DenseMatrix),
@@ -14,6 +16,27 @@ impl Matrix {
         }
     }
 
+    pub fn n(&self) -> usize {
+        match self {
+            Matrix::Dense(dense) => dense.n,
+            Matrix::Sparse(sparse) => sparse.n,
+        }
+    }
+
+    pub fn m(&self) -> usize {
+        match self {
+            Matrix::Dense(dense) => dense.m,
+            Matrix::Sparse(sparse) => sparse.m,
+        }
+    }
+
+    pub fn show(&self) {
+        match self {
+            Matrix::Dense(dense) => dense.show(),
+            Matrix::Sparse(sparse) => sparse.show(),
+        }
+    }
+
     pub fn get(&self, row: usize, col: usize) -> f64 {
         match self {
             Matrix::Dense(dense) => dense.get(row, col),
@@ -21,10 +44,38 @@ impl Matrix {
         }
     }
 
+    pub fn get_state(&self) -> MatrixState {
+        match self {
+            Matrix::Dense(dense) => dense.state.clone(),
+            Matrix::Sparse(sparse) => sparse.state.clone(),
+        }
+    }
+
     pub fn set(&mut self, row: usize, col: usize, value: f64) {
         match self {
             Matrix::Dense(dense) => dense.set(row, col, value),
             Matrix::Sparse(sparse) => sparse.set(row, col, value),
+        }
+    }
+
+    pub fn set_state(&mut self, state: MatrixState) {
+        match self {
+            Matrix::Dense(dense) => dense.set_state(state),
+            Matrix::Sparse(sparse) => sparse.set_state(state),
+        }
+    }
+
+    pub fn swap_rows(&mut self, row1: usize, row2: usize) {
+        match self {
+            Matrix::Dense(dense) => dense.swap_rows(row1, row2),
+            Matrix::Sparse(sparse) => sparse.swap_rows(row1, row2),
+        }
+    }
+
+    pub fn swap_columns(&mut self, col1: usize, col2: usize) {
+        match self {
+            Matrix::Dense(dense) => dense.swap_columns(col1, col2),
+            Matrix::Sparse(sparse) => sparse.swap_columns(col1, col2),
         }
     }
 
@@ -50,6 +101,13 @@ impl Matrix {
         match self {
             Matrix::Dense(dense) => dense.is_symmetric_positive_definite(),
             Matrix::Sparse(sparse) => sparse.is_symmetric_positive_definite(),
+        }
+    }
+
+    pub fn max_abs_in_column(&self, col: usize, start_row: usize) -> usize {
+        match self {
+            Matrix::Dense(dense) => dense.max_abs_in_column(col, start_row),
+            Matrix::Sparse(sparse) => sparse.max_abs_in_column(col, start_row),
         }
     }
 
@@ -105,6 +163,16 @@ impl Matrix {
             _ => panic!("Both inputs must be of the same matrix type for inner product"),
         }
     }
+
+    pub fn read_from_csv_with_right_hand_side(filename: &str, dense: bool) -> (Matrix, Matrix) {
+        if dense {
+            let (dense_mat, dense_b) = DenseMatrix::read_from_csv_with_right_hand_side(filename);
+            (Matrix::Dense(dense_mat), Matrix::Dense(dense_b))
+        } else {
+            let (sparse_mat, sparse_b) = SparseMatrix::read_from_csv_with_right_hand_side(filename);
+            (Matrix::Sparse(sparse_mat), Matrix::Sparse(sparse_b))
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -116,16 +184,16 @@ pub enum MatrixState {
 
 #[derive(Debug, Clone)]
 pub struct DenseMatrix {
-    pub n: usize, // number of rows
-    pub m: usize, // number of columns
-    pub data: Vec<Vec<f64>>, // 2D vector to hold matrix data
-    pub state: MatrixState,
+    n: usize, // number of rows
+    m: usize, // number of columns
+    data: Vec<Vec<f64>>, // 2D vector to hold matrix data
+    state: MatrixState,
 }
 
 
 #[allow(dead_code)]
 impl DenseMatrix {
-    pub fn new(n: usize, m: usize) -> Self {
+    fn new(n: usize, m: usize) -> Self {
         DenseMatrix {
             n,
             m,
@@ -134,7 +202,7 @@ impl DenseMatrix {
         }
     }
 
-    pub fn show(&self) {
+    fn show(&self) {
         for i in 0..self.n {
             for j in 0..self.m {
                 print!("{:8.4} ", self.data[i][j]);
@@ -143,15 +211,29 @@ impl DenseMatrix {
         }
     }
 
-    pub fn get(&self, row: usize, col: usize) -> f64 {
+    fn get(&self, row: usize, col: usize) -> f64 {
         self.data[row][col]
     }
 
-    pub fn set(&mut self, row: usize, col: usize, value: f64) {
+    fn set(&mut self, row: usize, col: usize, value: f64) {
         self.data[row][col] = value;
     }
 
-    pub fn copy(&self) -> DenseMatrix {
+    fn set_state(&mut self, state: MatrixState) {
+        self.state = state;
+    }
+
+    fn swap_rows(&mut self, row1: usize, row2: usize) {
+        self.data.swap(row1, row2);
+    }
+
+    fn swap_columns(&mut self, col1: usize, col2: usize) {
+        for i in 0..self.n {
+            self.data[i].swap(col1, col2);
+        }
+    }
+
+    fn copy(&self) -> DenseMatrix {
         let mut new_mat = DenseMatrix::new(self.n, self.m);
         for i in 0..self.n {
             for j in 0..self.m {
@@ -161,7 +243,7 @@ impl DenseMatrix {
         new_mat
     }
 
-    pub fn norm_inf(&self) -> f64 {
+    fn norm_inf(&self) -> f64 {
         let mut max_sum = 0.0;
         for i in 0..self.n {
             let row_sum: f64 = self.data[i].iter().map(|&x| x.abs()).sum();
@@ -172,16 +254,16 @@ impl DenseMatrix {
         max_sum
     }
 
-    pub fn from_sparse(sparse: &SparseMatrix) -> DenseMatrix {
+    fn from_sparse(sparse: &SparseMatrix) -> DenseMatrix {
         // Convert SparseMatrix to DenseMatrix
         unimplemented!()
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.n == 0 || self.m == 0
     }
 
-    pub fn is_symmetric_positive_definite(&self) -> bool {
+    fn is_symmetric_positive_definite(&self) -> bool {
         if self.n != self.m {
             return false;
         }
@@ -222,7 +304,7 @@ impl DenseMatrix {
     //     result
     // }
 
-    pub fn plus(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
+    fn plus(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
         if left.n != right.n || left.m != right.m {
             panic!("Matrices must have the same dimensions for addition");
         }
@@ -235,7 +317,7 @@ impl DenseMatrix {
         result
     }
 
-    pub fn minus(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
+    fn minus(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
         if left.n != right.n || left.m != right.m {
             panic!("Matrices must have the same dimensions for subtraction");
         }
@@ -248,7 +330,7 @@ impl DenseMatrix {
         result
     }
 
-    pub fn product(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
+    fn product(left: &DenseMatrix, right: &DenseMatrix) -> DenseMatrix {
         if left.m != right.n {
             panic!("Incompatible matrix dimensions for multiplication");
         }
@@ -263,7 +345,7 @@ impl DenseMatrix {
         result
     }
 
-    pub fn inner_product(vec1: &DenseMatrix, vec2: &DenseMatrix) -> f64 {
+    fn inner_product(vec1: &DenseMatrix, vec2: &DenseMatrix) -> f64 {
         if vec1.n != vec2.n || vec1.m != 1 || vec2.m != 1 {
             panic!("Both inputs must be column vectors of the same length for inner product");
         }
@@ -274,7 +356,7 @@ impl DenseMatrix {
         result
     }
 
-    pub fn scalar_multiply(&self, scalar: f64) -> DenseMatrix {
+    fn scalar_multiply(&self, scalar: f64) -> DenseMatrix {
         let mut result = DenseMatrix::new(self.n, self.m);
         for i in 0..self.n {
             for j in 0..self.m {
@@ -284,7 +366,7 @@ impl DenseMatrix {
         result
     }
 
-    pub fn max_abs_in_column(&self, col: usize, start_row: usize) -> usize {
+    fn max_abs_in_column(&self, col: usize, start_row: usize) -> usize {
         let mut max_row = start_row;
         let mut max_value = self.data[start_row][col].abs();
         for i in (start_row + 1)..self.n {
@@ -296,7 +378,7 @@ impl DenseMatrix {
         max_row
     }
 
-    pub fn read_from_csv_with_right_hand_side(filename: &str) -> (DenseMatrix, DenseMatrix) {
+    fn read_from_csv_with_right_hand_side(filename: &str) -> (DenseMatrix, DenseMatrix) {
         /*
         Reads matrix data from a CSV file. The CSV file should have the following format:
         n, m,
@@ -354,72 +436,257 @@ impl DenseMatrix {
 #[derive(Debug, Clone)]
 pub struct SparseMatrix {
     // Sparse matrix representation (e.g., CSR, CSC) can be defined here
+    n: usize,
+    m: usize,
+    data: HashMap<(usize, usize), f64>,
+    state: MatrixState,
 }
 
+#[allow(dead_code)]
 impl SparseMatrix {
-    pub fn new(n: usize, m: usize) -> Self {
+    fn new(n: usize, m: usize) -> Self {
         SparseMatrix {
-            // Initialize sparse matrix representation here
+            n,
+            m,
+            data: HashMap::new(),
+            state: MatrixState::Original,
         }
     }
 
-    pub fn get(&self, row: usize, col: usize) -> f64 {
+    fn show(&self) {
+        for i in 0..self.n {
+            for j in 0..self.m {
+                let val = self.get(i, j);
+                print!("{:8.4} ", val);
+            }
+            println!();
+        }
+    }
+
+    fn get(&self, row: usize, col: usize) -> f64 {
         // Implement getting value from sparse matrix
-        unimplemented!()
+        *self.data.get(&(row, col)).unwrap_or(&0.0)
     }
 
-    pub fn set(&mut self, row: usize, col: usize, value: f64) {
+    fn set(&mut self, row: usize, col: usize, value: f64) {
         // Implement setting value in sparse matrix
-        unimplemented!()
+        if value == 0.0 {
+            self.data.remove(&(row, col));
+        } else {
+            self.data.insert((row, col), value);
+        }
     }
 
-    pub fn from_dense(dense: &DenseMatrix) -> SparseMatrix {
+    fn set_state(&mut self, state: MatrixState) {
+        self.state = state;
+    }
+
+    fn swap_rows(&mut self, row1: usize, row2: usize) {
+        // Implement row swapping for sparse matrix
+        let mut new_data = HashMap::new();
+        for (&(row, col), &value) in &self.data {
+            if row == row1 {
+                new_data.insert((row2, col), value);
+            } else if row == row2 {
+                new_data.insert((row1, col), value);
+            } else {
+                new_data.insert((row, col), value);
+            }
+        }
+        self.data = new_data;
+    }
+
+    fn swap_columns(&mut self, col1: usize, col2: usize) {
+        // Implement column swapping for sparse matrix
+        let mut new_data = HashMap::new();
+        for (&(row, col), &value) in &self.data {
+            if col == col1 {
+                new_data.insert((row, col2), value);
+            } else if col == col2 {
+                new_data.insert((row, col1), value);
+            } else {
+                new_data.insert((row, col), value);
+            }
+        }
+        self.data = new_data;
+    }
+
+    fn from_dense(dense: &DenseMatrix) -> SparseMatrix {
         // Convert DenseMatrix to SparseMatrix
-        unimplemented!()
+        let mut sparse = SparseMatrix::new(dense.n, dense.m);
+        for i in 0..dense.n {
+            for j in 0..dense.m {
+                let val = dense.data[i][j];
+                if val != 0.0 {
+                    sparse.set(i, j, val);
+                }
+            }
+        }
+        sparse
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         // Implement check for empty sparse matrix
-        unimplemented!()
+        self.data.is_empty()
     }
 
-    pub fn copy(&self) -> SparseMatrix {
+    fn copy(&self) -> SparseMatrix {
         // Implement deep copy for sparse matrix
-        unimplemented!()
+        let mut new_sparse = SparseMatrix::new(self.n, self.m);
+        for (&(row, col), &value) in &self.data {
+            new_sparse.set(row, col, value);
+        }
+        new_sparse
     }
 
-    pub fn norm_inf(&self) -> f64 {
+    fn max_abs_in_column(&self, col: usize, start_row: usize) -> usize {
+        // Implement max absolute value in column for sparse matrix
+        let mut max_row = start_row;
+        let mut max_value = self.get(start_row, col).abs();
+        for i in (start_row + 1)..self.n {
+            let val = self.get(i, col).abs();
+            if val > max_value {
+                max_value = val;
+                max_row = i;
+            }
+        }
+        max_row
+    }
+
+    fn norm_inf(&self) -> f64 {
         // Implement infinity norm calculation for sparse matrix
-        unimplemented!()
+        let mut row_sums: HashMap<usize, f64> = HashMap::new();
+        for (&(row, _col), &value) in &self.data {
+            *row_sums.entry(row).or_insert(0.0) += value.abs();
+        }
+        row_sums.values().cloned().fold(0.0, f64::max)
     }
 
-    pub fn is_symmetric_positive_definite(&self) -> bool {
+    fn is_symmetric_positive_definite(&self) -> bool {
         // Implement check for symmetric positive definiteness for sparse matrix
-        unimplemented!()
+        if self.n != self.m {
+            return false;
+        }
+        for (&(i, j), &value) in &self.data {
+            if let Some(&transposed_value) = self.data.get(&(j, i)) {
+                if value != transposed_value {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        true
     }
 
-    pub fn scalar_multiply(&self, scalar: f64) -> SparseMatrix {
+    fn scalar_multiply(&self, scalar: f64) -> SparseMatrix {
         // Implement scalar multiplication for sparse matrix
-        unimplemented!()
+        let mut result = SparseMatrix::new(self.n, self.m);
+        for (&(row, col), &value) in &self.data {
+            result.set(row, col, value * scalar);
+        }
+        result
     }
 
-    pub fn plus(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
+    fn plus(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
         // Implement addition for sparse matrices
-        unimplemented!()
+        let mut result = SparseMatrix::new(left.n, left.m);
+        for (&(row, col), &value) in &left.data {
+            result.set(row, col, value);
+        }
+        for (&(row, col), &value) in &right.data {
+            let existing_value = result.get(row, col);
+            result.set(row, col, existing_value + value);
+        }
+        result
     }
 
-    pub fn minus(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
+    fn minus(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
         // Implement subtraction for sparse matrices
-        unimplemented!()
+        let mut result = SparseMatrix::new(left.n, left.m);
+        for (&(row, col), &value) in &left.data {
+            result.set(row, col, value);
+        }
+        for (&(row, col), &value) in &right.data {
+            let existing_value = result.get(row, col);
+            result.set(row, col, existing_value - value);
+        }
+        result
     }
 
-    pub fn product(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
+    fn product(left: &SparseMatrix, right: &SparseMatrix) -> SparseMatrix {
         // Implement multiplication for sparse matrices
-        unimplemented!()
+        let mut result = SparseMatrix::new(left.n, right.m);
+        for (&(i, k), &v1) in &left.data {
+            for j in 0..right.m {
+                if let Some(&v2) = right.data.get(&(k, j)) {
+                    let existing_value = result.get(i, j);
+                    result.set(i, j, existing_value + v1 * v2);
+                }
+            }
+        }
+        result
     }
 
-    pub fn inner_product(vec1: &SparseMatrix, vec2: &SparseMatrix) -> f64 {
+    fn inner_product(vec1: &SparseMatrix, vec2: &SparseMatrix) -> f64 {
         // Implement inner product for sparse vectors
-        unimplemented!()
+        if vec1.n != vec2.n || vec1.m != 1 || vec2.m != 1 {
+            panic!("Both inputs must be column vectors of the same length for inner product");
+        }
+        let mut result = 0.0;
+        for i in 0..vec1.n {
+            let v1 = vec1.get(i, 0);
+            let v2 = vec2.get(i, 0);
+            result += v1 * v2;
+        }
+        result
+    }
+
+    fn read_from_csv_with_right_hand_side(filename: &str) -> (SparseMatrix, SparseMatrix) {
+        // Implement reading sparse matrix from CSV file
+        let mut reader = csv::ReaderBuilder::new()
+            .has_headers(false)
+            .flexible(true)
+            .trim(csv::Trim::All)
+            .from_path(filename)
+            .expect("Cannot open file");
+
+        let mut vals: Vec<f64> = Vec::new();
+        for result in reader.records() {
+            let record = result.expect("Error reading csv record");
+            for field in record.iter() {
+                if field.is_empty() { continue; }
+                if let Ok(num) = field.trim().parse::<f64>() {
+                    vals.push(num);
+                }
+            }
+        }
+        let n = vals[0] as usize;
+        let m = vals[1] as usize;
+        let mut mat = SparseMatrix::new(n, m);
+        let mut index = 2;
+        for i in 0..n {
+            for j in 0..m {
+                let val = vals[index];
+                if val != 0.0 {
+                    mat.set(i, j, val);
+                }
+                index += 1;
+            }
+        }
+        let k = vals[index] as usize;
+        if k == 0 {
+            return (mat, SparseMatrix::new(0, 0));
+        }
+        let mut b = SparseMatrix::new(k, 1);
+        index += 1;
+        for i in 0..k {
+            let val = vals[index];
+            if val != 0.0 {
+                b.set(i, 0, val);
+            }
+            index += 1;
+        }
+        (mat, b)
     }
 }

@@ -2,7 +2,7 @@ mod solutions;
 use solutions::{lu_solve, cg};
 mod decomps;
 mod matrix;
-use matrix::{Matrix, DenseMatrix};
+use matrix::{Matrix};
 
 fn main() {
     // let mut mat = Matrix::new(3, 3);
@@ -11,7 +11,7 @@ fn main() {
     //     vec![4.0, -6.0, 0.0],
     //     vec![-2.0, 7.0, 2.0],
     // ];
-    let (mut mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
+    let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("tests/input/input2.csv", true);
     println!("Original Matrix:");
     mat.show();
     println!("Right-hand side Vector b: {:?}", b);
@@ -30,10 +30,13 @@ fn main() {
     x.show();
 
     // Example usage of Conjugate Gradient solver
-    let (mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
-    let initial_guess = None; // or Some(Matrix::new(mat.n, 1)) for a zero initial guess
+    let (mat, b) = Matrix::read_from_csv_with_right_hand_side("tests/input/input2.csv", true);
+    let initial_guess = None; // or Some(Matrix::new(mat.n(), 1, true)) for a zero initial guess
     let max_iter = 1000;
-    let x_cg = cg::solve(&mat, &b, initial_guess, max_iter);
+    let mut x_cg = cg::solve(&mat, &b, initial_guess, max_iter);
     println!("CG Solution Vector x:");
+    x_cg.show();
+    x_cg.change();
+    println!("CG Solution Vector as Sparse Matrix:");
     x_cg.show();
 }
