@@ -180,6 +180,7 @@ pub enum MatrixState {
     Original,
     Lu,
     Cc,
+    ICc,
 }
 
 #[derive(Debug, Clone)]
