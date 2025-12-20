@@ -2,7 +2,7 @@ mod solutions;
 use solutions::{lu_solve, cg};
 mod decomps;
 mod matrix;
-use matrix::{Matrix, DenseMatrix};
+use matrix::{Matrix};
 
 fn main() {
     // let mut mat = Matrix::new(3, 3);
@@ -11,7 +11,7 @@ fn main() {
     //     vec![4.0, -6.0, 0.0],
     //     vec![-2.0, 7.0, 2.0],
     // ];
-    let (mut mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
+    let (mut mat, b) = Matrix::read_from_csv_with_right_hand_side("tests/input/input2.csv", true);
     println!("Original Matrix:");
     mat.show();
     println!("Right-hand side Vector b: {:?}", b);
@@ -30,78 +30,13 @@ fn main() {
     x.show();
 
     // Example usage of Conjugate Gradient solver
-    let (mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
-    let initial_guess = None; // or Some(Matrix::new(mat.n, 1)) for a zero initial guess
+    let (mat, b) = Matrix::read_from_csv_with_right_hand_side("tests/input/input2.csv", true);
+    let initial_guess = None; // or Some(Matrix::new(mat.n(), 1, true)) for a zero initial guess
     let max_iter = 1000;
-    let x_cg = cg::solve(&mat, &b, initial_guess, max_iter);
+    let mut x_cg = cg::solve(&mat, &b, initial_guess, max_iter);
     println!("CG Solution Vector x:");
     x_cg.show();
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn output_vector(filename: &str) -> DenseMatrix {
-        let mut reader = csv::ReaderBuilder::new()
-            .has_headers(false)
-            .flexible(true)
-            .trim(csv::Trim::All)
-            .from_path(filename)
-            .expect("Cannot open output CSV file");
-
-        let mut vals: Vec<f64> = Vec::new();
-        for result in reader.records() {
-            let record = result.expect("Error reading csv record");
-            for field in record.iter() {
-                let s = field.trim();
-                if s.is_empty() { continue; }
-                if let Ok(num) = s.parse::<f64>() {
-                    vals.push(num);
-                } else {
-                    panic!("Failed to parse '{}' as f64 in {}", s, filename);
-                }
-            }
-        }
-        let n = vals.len();
-        let mut matrix = DenseMatrix::new(n, 1);
-        for i in 0..n {
-            matrix.data[i][0] = vals[i];
-        }
-        matrix
-    }
-
-    #[test]
-    fn test_solve_10x10() {
-        let (mut mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input2.csv");
-        let p = mat.lu_decomposition();
-        let x = lu_solve::solve(&mat, &p, &b);
-        let expected_x = output_vector("src/test/output/output2.csv");
-        for i in 0..x.n {
-            assert!((x.data[i][0] - expected_x.data[i][0]).abs() < 1e-6, "Mismatch at index {}: expected {}, got {}", i, expected_x.data[i][0], x.data[i][0]);
-        }
-    }
-
-    #[test]
-    fn test_solve_50x50() {
-        let (mut mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
-        let p = mat.lu_decomposition();
-        let x = lu_solve::solve(&mat, &p, &b);
-        let expected_x = output_vector("src/test/output/output3.csv");
-        for i in 0..x.n {
-            assert!((x.data[i][0] - expected_x.data[i][0]).abs() < 1e-6, "Mismatch at index {}: expected {}, got {}", i, expected_x.data[i][0], x.data[i][0]);
-        }
-    }
-
-    #[test]
-    fn test_solve_50x50_with_cg() {
-        let (mat, b) = DenseMatrix::read_from_csv_with_right_hand_side("src/test/input/input3.csv");
-        let initial_guess = None;
-        let max_iter = 1000;
-        let x = cg::solve(&mat, &b, initial_guess, max_iter);
-        let expected_x = output_vector("src/test/output/output3.csv");
-        for i in 0..x.n {
-            assert!((x.data[i][0] - expected_x.data[i][0]).abs() < 1e-6, "Mismatch at index {}: expected {}, got {}", i, expected_x.data[i][0], x.data[i][0]);
-        }
-    }
+    x_cg.change();
+    println!("CG Solution Vector as Sparse Matrix:");
+    x_cg.show();
 }
